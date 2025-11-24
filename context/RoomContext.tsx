@@ -5,9 +5,12 @@ import { Room, Furniture, AppState, Point } from '@/types';
 
 interface RoomContextType {
   state: AppState;
+  currentProjectId: string | null;
+  currentProjectName: string | null;
   setRoom: (room: Room | null) => void;
   createRoom: (name: string, points: Point[]) => void;
-  loadRoomWithFurniture: (room: Room, furniture: Furniture[]) => void;
+  loadRoomWithFurniture: (room: Room, furniture: Furniture[], projectId?: string, projectName?: string) => void;
+  loadRoomOnly: (room: Room) => void;
   addFurniture: (furniture: Omit<Furniture, 'id'>) => void;
   updateFurniture: (id: string, updates: Partial<Furniture>) => void;
   deleteFurniture: (id: string) => void;
@@ -15,6 +18,7 @@ interface RoomContextType {
   addRoomPoint: (point: Point) => void;
   clearRoomPoints: () => void;
   completeRoom: (name: string) => void;
+  clearCurrentProject: () => void;
 }
 
 const RoomContext = createContext<RoomContextType | undefined>(undefined);
@@ -27,6 +31,8 @@ export function RoomProvider({ children }: { children: ReactNode }) {
   });
 
   const [tempRoomPoints, setTempRoomPoints] = useState<Point[]>([]);
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+  const [currentProjectName, setCurrentProjectName] = useState<string | null>(null);
 
   const setRoom = (room: Room | null) => {
     setState(prev => ({ ...prev, room, furniture: [] }));
@@ -44,12 +50,28 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const loadRoomWithFurniture = (room: Room, furniture: Furniture[]) => {
+  const loadRoomWithFurniture = (room: Room, furniture: Furniture[], projectId?: string, projectName?: string) => {
     setState({
       room,
       furniture,
       selectedFurnitureId: null,
     });
+    setTempRoomPoints([]);
+    setCurrentProjectId(projectId || null);
+    setCurrentProjectName(projectName || null);
+  };
+
+  const clearCurrentProject = () => {
+    setCurrentProjectId(null);
+    setCurrentProjectName(null);
+  };
+
+  const loadRoomOnly = (room: Room) => {
+    setState(prev => ({
+      ...prev,
+      room,
+      selectedFurnitureId: null,
+    }));
     setTempRoomPoints([]);
   };
 
@@ -108,9 +130,12 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     <RoomContext.Provider
       value={{
         state,
+        currentProjectId,
+        currentProjectName,
         setRoom,
         createRoom,
         loadRoomWithFurniture,
+        loadRoomOnly,
         addFurniture,
         updateFurniture,
         deleteFurniture,
@@ -118,6 +143,7 @@ export function RoomProvider({ children }: { children: ReactNode }) {
         addRoomPoint,
         clearRoomPoints,
         completeRoom,
+        clearCurrentProject,
       }}
     >
       {children}
